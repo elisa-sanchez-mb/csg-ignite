@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var role = member.customFields.igniterole;
 
     // Only show for super_admin
-    if (role === "reward_manager") {
+    if (role === "reward_manager" || role === "super_admin") {
       el.style.display = "block";
     }
   });
