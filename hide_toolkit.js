@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (!member || !member.customFields) return;
 
     // Use your exact custom field ID
-    var role = member.customFields["cus_cmknsred900yz0sqe2fl89ee3"];
+    var role = member.customFields["igniterole"];
 
     // Only show if value equals "super_admin"
     if (role === "super_admin") {
