@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
   window.$memberstackDom.getCurrentMember().then(({ data: member }) => {
-    const els = document.querySelectorAll('[data-ignite="award-manager-toolkit"]');
+    const els = document.querySelectorAll('[data-toolkit-show="true"]');
     if (!els.length) return;
 
     els.forEach(el => el.style.display = "none");
