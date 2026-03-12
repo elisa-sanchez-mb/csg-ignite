@@ -275,3 +275,173 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
+
+/* ============================================================
+   IMAGE LIGHTBOX
+   On click of .expand_img_wrapper, opens the sibling image
+   in an accessible modal lightbox. Closes on Esc or close button.
+   ============================================================ */
+(function () {
+
+  let lastFocused = null;
+
+  /* ── Create the lightbox DOM (once) ── */
+  const overlay = document.createElement('div');
+  overlay.id = 'lightbox-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Image lightbox');
+  overlay.setAttribute('tabindex', '-1');
+
+  overlay.innerHTML = `
+    <button id="lightbox-close" aria-label="Close lightbox">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+           width="20" height="20" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+    <img id="lightbox-img" src="" alt="" />
+  `;
+
+  const style = document.createElement('style');
+  style.textContent = `
+    #lightbox-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.85);
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      box-sizing: border-box;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    #lightbox-overlay.is-active {
+      display: flex;
+    }
+    #lightbox-overlay.is-visible {
+      opacity: 1;
+    }
+    #lightbox-img {
+      max-width: 100%;
+      max-height: 90vh;
+      width: auto;
+      height: auto;
+      border-radius: 4px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+      display: block;
+      object-fit: contain;
+    }
+    #lightbox-close {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.25rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #fff;
+      transition: background 0.15s ease;
+      flex-shrink: 0;
+    }
+    #lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    #lightbox-close:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+    .expand_img_wrapper {
+      cursor: zoom-in;
+    }
+  `;
+
+  document.head.appendChild(style);
+  document.body.appendChild(overlay);
+
+  const closeBtn = overlay.querySelector('#lightbox-close');
+  const lightboxImg = overlay.querySelector('#lightbox-img');
+
+  /* ── Open ── */
+  function openLightbox(trigger) {
+    const img = trigger.querySelector('img')
+      || trigger.previousElementSibling?.tagName === 'IMG' && trigger.previousElementSibling
+      || trigger.nextElementSibling?.tagName === 'IMG' && trigger.nextElementSibling
+      || trigger.closest(':has(img)')?.querySelector('img');
+
+    if (!img) return;
+
+    lastFocused = document.activeElement;
+
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt || 'Expanded image';
+
+    overlay.classList.add('is-active');
+    document.body.style.overflow = 'hidden';
+
+    // Trigger transition on next frame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        overlay.classList.add('is-visible');
+        overlay.focus();
+      });
+    });
+  }
+
+  /* ── Close ── */
+  function closeLightbox() {
+    overlay.classList.remove('is-visible');
+
+    overlay.addEventListener('transitionend', function handler() {
+      overlay.classList.remove('is-active');
+      lightboxImg.src = '';
+      document.body.style.overflow = '';
+      overlay.removeEventListener('transitionend', handler);
+    });
+
+    if (lastFocused) lastFocused.focus();
+  }
+
+  /* ── Trigger clicks ── */
+  document.addEventListener('click', function (e) {
+    const wrapper = e.target.closest('.expand_img_wrapper');
+    if (wrapper) {
+      e.preventDefault();
+      openLightbox(wrapper);
+      return;
+    }
+
+    // Click on backdrop (not image) closes
+    if (e.target === overlay) {
+      closeLightbox();
+    }
+  });
+
+  /* ── Close button ── */
+  closeBtn.addEventListener('click', closeLightbox);
+
+  /* ── Esc key ── */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('is-active')) {
+      closeLightbox();
+    }
+  });
+
+  /* ── Focus trap ── */
+  overlay.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    // Only focusable element is the close button — keep focus on it
+    e.preventDefault();
+    closeBtn.focus();
+  });
+
+})();
